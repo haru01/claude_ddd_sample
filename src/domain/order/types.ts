@@ -64,3 +64,25 @@ export const ResultSchema = <T>(schema: z.ZodType<T>) => z.discriminatedUnion("s
   z.object({ success: z.literal(false), error: z.string() })
 ]);
 export type Result<T> = z.infer<ReturnType<typeof ResultSchema<T>>>;
+
+// リポジトリインターフェース
+export interface OrderRepository {
+  save: (order: Order) => Promise<void>;
+  findById: (id: OrderId) => Promise<Order | null>;
+  findByCustomerId: (customerId: CustomerId) => Promise<Order[]>;
+  nextId: () => OrderId;
+}
+
+// リポジトリエラー
+export const RepositoryErrorSchema = z.discriminatedUnion("type", [
+  z.object({
+    type: z.literal("not_found"),
+    message: z.string()
+  }),
+  z.object({
+    type: z.literal("database_error"),
+    message: z.string(),
+    cause: z.unknown().optional()
+  })
+]);
+export type RepositoryError = z.infer<typeof RepositoryErrorSchema>;

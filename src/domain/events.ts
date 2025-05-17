@@ -7,11 +7,12 @@ export const DomainEventSchema = z.object({
   eventType: z.string(),
   aggregateId: z.string(),
   occurredAt: z.date()
-}).readonly();
+});
 export type DomainEvent = z.infer<typeof DomainEventSchema>;
 
 // 注文確定イベント
-export const OrderPlacedEventSchema = DomainEventSchema.extend({
+export const OrderPlacedEventSchema = z.object({
+  ...DomainEventSchema.shape,
   eventType: z.literal("order_placed"),
   aggregateId: z.custom<OrderId>(),
   customerId: z.string(),
@@ -37,7 +38,8 @@ export class OrderPlacedEvent implements OrderPlacedEventType {
 }
 
 // 注文支払い完了イベント
-export const OrderPaidEventSchema = DomainEventSchema.extend({
+export const OrderPaidEventSchema = z.object({
+  ...DomainEventSchema.shape,
   eventType: z.literal("order_paid"),
   aggregateId: z.custom<OrderId>()
 }).readonly();
@@ -59,7 +61,8 @@ export class OrderPaidEvent implements OrderPaidEventType {
 }
 
 // 配送開始イベント
-export const ShipmentStartedEventSchema = DomainEventSchema.extend({
+export const ShipmentStartedEventSchema = z.object({
+  ...DomainEventSchema.shape,
   eventType: z.literal("shipment_started"),
   aggregateId: z.custom<ShippingId>(),
   orderId: z.custom<OrderId>(),
@@ -85,7 +88,8 @@ export class ShipmentStartedEvent implements ShipmentStartedEventType {
 }
 
 // 配送完了イベント
-export const ShipmentDeliveredEventSchema = DomainEventSchema.extend({
+export const ShipmentDeliveredEventSchema = z.object({
+  ...DomainEventSchema.shape,
   eventType: z.literal("shipment_delivered"),
   aggregateId: z.custom<ShippingId>(),
   orderId: z.custom<OrderId>()

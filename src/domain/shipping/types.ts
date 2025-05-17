@@ -55,3 +55,25 @@ export type ShippingError = z.infer<typeof ShippingErrorSchema>;
 export type Result<T> = 
   | { success: true; value: T }
   | { success: false; error: string };
+
+// リポジトリインターフェース
+export interface ShippingRepository {
+  save: (shipping: Shipping) => Promise<void>;
+  findById: (id: ShippingId) => Promise<Shipping | null>;
+  findByOrderId: (orderId: OrderId) => Promise<Shipping | null>;
+  nextId: () => ShippingId;
+}
+
+// リポジトリエラー
+export const ShippingRepositoryErrorSchema = z.discriminatedUnion("type", [
+  z.object({
+    type: z.literal("not_found"),
+    message: z.string()
+  }),
+  z.object({
+    type: z.literal("database_error"),
+    message: z.string(),
+    cause: z.unknown().optional()
+  })
+]);
+export type ShippingRepositoryError = z.infer<typeof ShippingRepositoryErrorSchema>;

@@ -1,7 +1,8 @@
 import { pipe } from 'fp-ts/function';
 import { z } from 'zod';
-import { TaskEither, taskEither } from '../shared/types';
+import { TaskEither, taskEither, left, right } from '../shared/types';
 import {
+  Order,
   OrderId,
   OrderLine,
   OrderLineSchema,
@@ -55,64 +56,49 @@ export const createPlaceOrderCommandHandler = (
           type: "validation_error",
           message: error.errors[0].message
         };
-        return taskEither.fromEither({ type: "left", value: validationError });
+        return taskEither.fromEither(left(validationError));
       }
     }
 
     // 注文の作成処理
     return pipe(
       // 1. 新しい注文を作成
-      taskEither.fromEither({
-        type: "right" as const,
-        value: createOrder(createCustomerId())
-      }),
+      taskEither.fromEither<PlaceOrderError, Order>(right(createOrder(createCustomerId()))),
 
       // 2. 注文明細を追加
-      taskEither.chain(order => {
+      taskEither.chain((order): TaskEither<PlaceOrderError, Order> => {
         let currentOrder = order;
         
         for (const line of command.lines) {
           const result = addOrderLine(currentOrder, line);
           if (!result.success) {
-            return taskEither.fromEither({
-              type: "left" as const,
-              value: {
+            return taskEither.fromEither(left({
                 type: "business_rule_violation" as const,
                 message: result.error
-              }
-            });
+              }));
           }
           currentOrder = result.value;
         }
         
-        return taskEither.fromEither({
-          type: "right" as const,
-          value: currentOrder
-        });
+        return taskEither.fromEither(right(currentOrder));
       }),
 
       // 3. 注文を確定
-      taskEither.chain(order => {
+      taskEither.chain((order): TaskEither<PlaceOrderError, Order> => {
         const result = placeOrder(order);
         
         if (!result.success) {
-          return taskEither.fromEither({
-            type: "left" as const,
-            value: {
+          return taskEither.fromEither(left({
               type: "business_rule_violation" as const,
               message: result.error
-            }
-          });
+            }));
         }
         
-        return taskEither.fromEither({
-          type: "right" as const,
-          value: result.value
-        });
+        return taskEither.fromEither(right(result.value));
       }),
 
       // 4. 注文を保存
-      taskEither.chain(order =>
+      taskEither.chain((order): TaskEither<PlaceOrderError, Order> =>
         taskEither.fromPromise(
           orderRepository.save(order).then(() => order),
           (error): PlaceOrderError => ({
@@ -124,7 +110,7 @@ export const createPlaceOrderCommandHandler = (
       ),
 
       // 5. イベントを発行
-      taskEither.chain(order => {
+      taskEither.chain((order): TaskEither<PlaceOrderError, OrderId> => {
         const event = new OrderPlacedEvent(
           order.id,
           order.customerId,

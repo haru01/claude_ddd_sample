@@ -4,13 +4,7 @@ export const UUIDSchema = z.string().uuid();
 export type UUID = z.infer<typeof UUIDSchema>;
 
 // 成功または失敗を表現するEither型
-export const EitherSchema = <E, A>(errorSchema: z.ZodType<E>, valueSchema: z.ZodType<A>) =>
-  z.discriminatedUnion("type", [
-    z.object({ type: z.literal("left"), value: errorSchema }),
-    z.object({ type: z.literal("right"), value: valueSchema })
-  ]);
-
-export type Either<E, A> = z.infer<ReturnType<typeof EitherSchema<E, A>>>;
+export type Either<E, A> = { type: "left"; value: E } | { type: "right"; value: A };
 
 // 非同期処理の結果を表現するTask型
 export type Task<A> = Promise<A>;

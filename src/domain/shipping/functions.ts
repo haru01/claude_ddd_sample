@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import {
   Shipping,
+  ShippingId,
   ShippingStatus,
   ShippingMethod,
   Address,

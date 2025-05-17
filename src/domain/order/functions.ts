@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import {
   Order,
+  OrderId,
   OrderLine,
   OrderStatus,
   CustomerId,

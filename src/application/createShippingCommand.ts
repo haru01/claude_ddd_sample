@@ -1,7 +1,7 @@
 import { pipe } from 'fp-ts/function';
 import { z } from 'zod';
-import { TaskEither, taskEither } from '../shared/types';
-import { OrderId, OrderRepository } from '../domain/order/types';
+import { TaskEither, taskEither, left, right } from '../shared/types';
+import { OrderId, OrderRepository, Order } from '../domain/order/types';
 import {
   ShippingId,
   Address,
@@ -52,7 +52,7 @@ export const createCreateShippingCommandHandler = (
           type: "validation_error",
           message: error.errors[0].message
         };
-        return taskEither.fromEither({ type: "left", value: validationError });
+        return taskEither.fromEither(left(validationError));
       }
     }
 
@@ -68,31 +68,25 @@ export const createCreateShippingCommandHandler = (
       ),
 
       // 2. 注文の存在確認
-      taskEither.chain(order => {
+      taskEither.chain((order): TaskEither<CreateShippingError, Order> => {
         if (order === null) {
-          return taskEither.fromEither({
-            type: "left",
-            value: {
-              type: "not_found",
+          return taskEither.fromEither(left({
+              type: "not_found" as const,
               message: `注文ID ${command.orderId} が見つかりません`
-            }
-          });
+            }));
         }
-        return taskEither.fromEither({ type: "right", value: order });
+        return taskEither.fromEither(right(order));
       }),
 
       // 3. 注文が支払い済みか確認
-      taskEither.chain(order => {
+      taskEither.chain((order): TaskEither<CreateShippingError, Order> => {
         if (order.status.type !== "paid") {
-          return taskEither.fromEither({
-            type: "left",
-            value: {
-              type: "business_rule_violation",
+          return taskEither.fromEither(left({
+              type: "business_rule_violation" as const,
               message: "支払い済みの注文のみ配送できます"
-            }
-          });
+            }));
         }
-        return taskEither.fromEither({ type: "right", value: order });
+        return taskEither.fromEither(right(order));
       }),
 
       // 4. 既存の配送がないか確認
@@ -108,36 +102,33 @@ export const createCreateShippingCommandHandler = (
       ),
 
       // 5. 重複チェック
-      taskEither.chain(existingShipping => {
+      taskEither.chain((existingShipping): TaskEither<CreateShippingError, null> => {
         if (existingShipping !== null) {
-          return taskEither.fromEither({
-            type: "left",
-            value: {
-              type: "business_rule_violation",
+          return taskEither.fromEither(left({
+              type: "business_rule_violation" as const,
               message: `注文ID ${command.orderId} の配送は既に存在します`
-            }
-          });
+            }));
         }
-        return taskEither.fromEither({ type: "right", value: null });
+        return taskEither.fromEither(right(null));
       }),
 
       // 6. 配送を作成
-      taskEither.chain(() => {
+      taskEither.chain((): TaskEither<CreateShippingError, ReturnType<typeof createShipping>> => {
         const shipping = createShipping(
           command.orderId,
           command.shippingAddress,
           command.method
         );
 
-        return taskEither.fromEither({ type: "right", value: shipping });
+        return taskEither.fromEither(right(shipping));
       }),
 
       // 7. 配送を保存
-      taskEither.chain(shipping =>
+      taskEither.chain((shipping): TaskEither<CreateShippingError, ShippingId> =>
         taskEither.fromPromise(
           shippingRepository.save(shipping).then(() => shipping.id),
           (error): CreateShippingError => ({
-            type: "repository_error",
+            type: "repository_error" as const,
             message: "配送の保存中にエラーが発生しました",
             cause: error
           })
