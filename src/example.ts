@@ -14,10 +14,10 @@ import {
   createCustomerId,
   createProductId,
   createPrice,
-  createQuantity
-} from './domain/order/valueObjects';
-import { createOrderId } from './domain/order/valueObjects';
-import { OrderLineSchema } from './domain/order/types';
+  createQuantity,
+  createOrderId,
+  OrderLineSchema
+} from './domain/order/types';
 import { AddressSchema } from './domain/shipping/types';
 
 async function example() {

@@ -9,12 +9,10 @@ import {
   Result,
   OrderSchema,
   OrderLineSchema,
-  OrderError
-} from './types';
-import {
+  OrderError,
   createOrderId,
   createPrice
-} from './valueObjects';
+} from './types';
 
 // ファクトリ関数 - 新しい注文を作成
 export const createOrder = (customerId: CustomerId): Order => {

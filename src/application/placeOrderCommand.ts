@@ -6,14 +6,14 @@ import {
   OrderId,
   OrderLine,
   OrderLineSchema,
-  OrderRepository
+  OrderRepository,
+  createCustomerId
 } from '../domain/order/types';
 import {
   createOrder,
   addOrderLine,
   placeOrder
 } from '../domain/order/functions';
-import { createCustomerId } from '../domain/order/valueObjects';
 import { OrderPlacedEvent } from '../domain/events';
 
 // コマンド型

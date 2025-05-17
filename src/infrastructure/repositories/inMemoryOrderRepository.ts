@@ -1,5 +1,4 @@
-import { Order, OrderId, CustomerId, OrderRepository } from '../../domain/order/types';
-import { createOrderId } from '../../domain/order/valueObjects';
+import { Order, OrderId, CustomerId, OrderRepository, createOrderId } from '../../domain/order/types';
 
 /**
  * インメモリ注文リポジトリの実装

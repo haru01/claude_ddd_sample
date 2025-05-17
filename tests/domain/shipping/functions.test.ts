@@ -12,7 +12,7 @@ import {
   Address,
   AddressSchema
 } from '../../../src/domain/shipping/types';
-import { createOrderId } from '../../../src/domain/order/valueObjects';
+import { createOrderId } from '../../../src/domain/order/types';
 
 describe('配送ドメイン関数', () => {
   const createTestAddress = (): Address => {

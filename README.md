@@ -19,17 +19,19 @@ CLAUDE.md の情報をもとに生成しました。
 src/
 ├── domain/                 # ドメイン層
 │   ├── order/             # 注文ドメイン
-│   │   ├── types.ts       # 型定義
-│   │   ├── valueObjects.ts # 値オブジェクト
+│   │   ├── types.ts       # 型定義と値オブジェクト生成関数
 │   │   └── functions.ts   # ドメインロジック
 │   ├── shipping/          # 配送ドメイン
-│   │   ├── types.ts
-│   │   ├── valueObjects.ts
-│   │   └── functions.ts
+│   │   ├── types.ts       # 型定義と値オブジェクト生成関数
+│   │   └── functions.ts   # ドメインロジック
 │   └── events.ts          # ドメインイベント
 ├── application/           # アプリケーション層
 │   ├── placeOrderCommand.ts
 │   └── createShippingCommand.ts
+├── infrastructure/        # インフラストラクチャ層
+│   └── repositories/      # リポジトリ実装
+│       ├── inMemoryOrderRepository.ts
+│       └── inMemoryShippingRepository.ts
 ├── shared/                # 共通ユーティリティ
 │   └── types.ts          # Either/TaskEither型
 └── example.ts            # 実行例
@@ -53,7 +55,7 @@ npm run example
 
 ## 主要な概念
 
-### 1. 値オブジェクト
+### 1. 型定義と値オブジェクト（統合されたtypes.ts）
 
 ```typescript
 // ブランド型を使用した型安全な識別子
@@ -63,6 +65,21 @@ export type OrderId = UUID & { readonly _brand: unique symbol };
 export const PriceSchema = z.number()
   .nonnegative("価格は負の値にできません")
   .max(999999.99, "価格は999,999.99を超えることはできません");
+
+// スマートコンストラクタパターン
+export const createPrice = (value: number): Result<Price> => {
+  const result = PriceSchema.safeParse(value);
+  if (!result.success) {
+    return {
+      success: false,
+      error: result.error.errors[0].message || "無効な価格です"
+    };
+  }
+  return {
+    success: true,
+    value: result.data as Price
+  };
+};
 ```
 
 ### 2. 集約

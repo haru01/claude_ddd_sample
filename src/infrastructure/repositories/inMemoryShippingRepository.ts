@@ -1,6 +1,5 @@
 import { OrderId } from '../../domain/order/types';
-import { Shipping, ShippingId, ShippingRepository } from '../../domain/shipping/types';
-import { createShippingId } from '../../domain/shipping/valueObjects';
+import { Shipping, ShippingId, ShippingRepository, createShippingId } from '../../domain/shipping/types';
 
 /**
  * インメモリ配送リポジトリの実装

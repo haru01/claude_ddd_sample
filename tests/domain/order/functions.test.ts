@@ -12,14 +12,12 @@ import {
   Price,
   Quantity,
   OrderSchema,
-  OrderLineSchema
-} from '../../../src/domain/order/types';
-import {
+  OrderLineSchema,
   createCustomerId,
   createProductId,
   createPrice,
   createQuantity
-} from '../../../src/domain/order/valueObjects';
+} from '../../../src/domain/order/types';
 
 describe('注文ドメイン関数', () => {
   describe('createOrder', () => {

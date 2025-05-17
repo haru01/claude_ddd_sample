@@ -6,13 +6,11 @@ import {
   ShippingMethod,
   Address,
   Result,
-  ShippingSchema
-} from './types';
-import { OrderId } from '../order/types';
-import {
+  ShippingSchema,
   createShippingId,
   createTrackingNumber
-} from './valueObjects';
+} from './types';
+import { OrderId } from '../order/types';
 
 // ファクトリ関数 - 新しい配送を作成
 export const createShipping = (
