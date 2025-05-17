@@ -1,17 +1,22 @@
-Claude - TypeScriptによる関数型ドメイン駆動設計アプローチ
-1. はじめに
-本ドキュメントでは、TypeScriptを使用した関数型プログラミングパラダイムによるドメイン駆動設計（DDD）の実装アプローチについて説明します。オブジェクト指向DDDとは異なり、関数型DDDでは不変性、副作用の分離、型駆動設計を中心に据えています。
-1.1 目的
+# Claude - TypeScriptによる関数型ドメイン駆動設計アプローチ
+
+## 1. はじめに
+本ドキュメントでは、TypeScriptを使用した関数型プログラミングパラダイムによるドメイン駆動設計（DDD）の実装アプローチについて説明します。
+オブジェクト指向DDDとは異なり、関数型DDDでは不変性、副作用の分離、型駆動設計を中心に据えています。
+
+### 1.1 目的
 このプロジェクトの目的は以下の通りです：
 
-TypeScriptによる関数型プログラミングとDDDを組み合わせた実践的なアプローチを提示する
-不変データ構造と純粋関数によるドメインモデリング手法を示す
-代数的データ型と型合成による堅牢なドメインモデルの構築方法を説明する
-関数型プログラミングの原則（不変性、副作用の分離、関数合成）を活用したDDD実装を提供する
-Zodによる強力なバリデーションでドメインの整合性を保証する
+- TypeScriptによる関数型プログラミングとDDDを組み合わせた実践的なアプローチを提示する
+- 不変データ構造と純粋関数によるドメインモデリング手法を示す
+- 代数的データ型と型合成による堅牢なドメインモデルの構築方法を説明する
+- 関数型プログラミングの原則（不変性、副作用の分離、関数合成）を活用したDDD実装を提供する
+- Zodによる強力なバリデーションでドメインの整合性を保証する
 
-2. プロジェクト構造
+## 2. プロジェクト構造
 関数型DDDアプローチでは、以下のようなプロジェクト構造を採用します：
+
+```
 claude/
 ├── src/
 │   ├── domain/                 # ドメイン層: 型、関数、ドメインロジック
@@ -28,10 +33,15 @@ claude/
     ├── domain/                 # ドメインロジックのテスト
     ├── application/            # アプリケーションのテスト
     └── api/                    # APIエンドポイントのテスト
-3. 型駆動ドメインモデリング
+```
+
+## 3. 型駆動ドメインモデリング
 関数型DDDでは、まず型を定義することからドメインモデリングを始めます。TypeScriptの型システムとZodを活用して、「不正な状態を表現できない」モデルを構築します。
-3.1 会話ドメインの型定義
-typescript// src/domain/conversation/types.ts
+
+### 3.1 会話ドメインの型定義
+
+```typescript
+// src/domain/conversation/types.ts
 import { z } from 'zod';
 import { UUID } from "../../shared/types";
 
@@ -85,8 +95,12 @@ export const ResultSchema = <T>(schema: z.ZodType<T>) => z.discriminatedUnion("s
   z.object({ success: z.literal(false), error: z.string() })
 ]);
 export type Result<T> = z.infer<ReturnType<typeof ResultSchema<T>>>;
-3.2 値オブジェクト生成関数
-typescript// src/domain/conversation/valueObjects.ts
+```
+
+### 3.2 値オブジェクト生成関数
+
+```typescript
+// src/domain/conversation/valueObjects.ts
 import { v4 as uuidv4 } from 'uuid';
 import { z } from 'zod';
 import {
@@ -127,10 +141,15 @@ export const createMessageContent = (content: string): Result<MessageContent> =>
     value: result.data as MessageContent
   };
 };
-4. ドメイン関数
+```
+
+## 4. ドメイン関数
 関数型DDDでは、オブジェクト指向のメソッドの代わりに、純粋関数を使ってドメインロジックを実装します。これにより、副作用を分離し、テスト容易性を高めます。
-4.1 会話ドメイン関数
-typescript// src/domain/conversation/functions.ts
+
+### 4.1 会話ドメイン関数
+
+```typescript
+// src/domain/conversation/functions.ts
 import { z } from 'zod';
 import {
   Conversation,
@@ -288,10 +307,15 @@ export interface ConversationRepository {
   findById: (id: ConversationId) => Promise<Conversation | null>;
   findByUserId: (userId: UserId) => Promise<Conversation[]>;
 }
-5. 副作用の分離
+```
+
+## 5. 副作用の分離
 関数型DDDでは、純粋なドメインロジックと副作用（データベースアクセス、API呼び出しなど）を明確に分離します。
-5.1 Either型とTask型の導入
-typescript// src/shared/types.ts
+
+### 5.1 Either型とTask型の導入
+
+```typescript
+// src/shared/types.ts
 import { z } from 'zod';
 
 export const UUIDSchema = z.string().uuid();
@@ -339,8 +363,12 @@ export const taskEither = {
         ? f(either.value)
         : Promise.resolve(either as Either<E, B>))
 };
-5.2 リポジトリの実装
-typescript// src/infrastructure/repositories/conversationRepository.ts
+```
+
+### 5.2 リポジトリの実装
+
+```typescript
+// src/infrastructure/repositories/conversationRepository.ts
 import { z } from 'zod';
 import {
   Conversation,
@@ -485,10 +513,15 @@ export class PostgresConversationRepository implements ConversationRepository {
     );
   }
 }
-6. アプリケーション層
+```
+
+## 6. アプリケーション層
 アプリケーション層では、ドメイン関数を組み合わせてユースケースを実装します。関数型DDDでは、パイプラインやモナド変換を活用して関数を合成します。
-6.1 コマンドハンドラー
-typescript// src/application/commands/addMessageCommand.ts
+
+### 6.1 コマンドハンドラー
+
+```typescript
+// src/application/commands/addMessageCommand.ts
 import { pipe } from 'fp-ts/function';
 import { z } from 'zod';
 import { TaskEither, taskEither } from '../../shared/types';
@@ -650,8 +683,12 @@ export const createAddMessageCommandHandler = (
     );
   };
 };
-6.2 クエリハンドラー
-typescript// src/application/queries/getConversationHistoryQuery.ts
+```
+
+### 6.2 クエリハンドラー
+
+```typescript
+// src/application/queries/getConversationHistoryQuery.ts
 import { pipe } from 'fp-ts/function';
 import { z } from 'zod';
 import { TaskEither, taskEither } from '../../shared/types';
@@ -809,9 +846,13 @@ export const createGetConversationHistoryQueryHandler = (
     );
   };
 };
-7. 生成AIとの統合
+```
+
+## 7. 生成AIとの統合
 関数型DDDアプローチでは、AIモデルとの対話も純粋関数と副作用の分離原則に従って実装します。
-typescript// src/domain/generation/types.ts
+
+```typescript
+// src/domain/generation/types.ts
 import { z } from 'zod';
 import { TaskEither } from '../../shared/types';
 import { ConversationId, Message } from '../conversation/types';
@@ -956,9 +997,13 @@ export class ClaudeGenerationService implements GenerationService {
     }
   }
 }
-8. API実装
+```
+
+## 8. API実装
 Express.jsを使用したAPI層の実装です。関数型プログラミングのアプローチを適用しています。
-typescript// src/api/routes/conversationRoutes.ts
+
+```typescript
+// src/api/routes/conversationRoutes.ts
 import { Router, Request, Response } from 'express';
 import { z } from 'zod';
 import {
@@ -1085,9 +1130,13 @@ export const createConversationRoutes = (
 
   return router;
 };
-9. イベント処理
+```
+
+## 9. イベント処理
 関数型DDDでは、ドメインイベントを使って副作用を分離し、モジュール間の疎結合を実現します。
-typescript// src/domain/events.ts
+
+```typescript
+// src/domain/events.ts
 import { z } from 'zod';
 import { ConversationId, MessageId, MessageRole, MessageRoleSchema } from './conversation/types';
 
@@ -1198,9 +1247,13 @@ export class InMemoryEventBus implements EventBus {
     );
   }
 }
-10. ユニットテスト
+```
+
+## 10. ユニットテスト
 関数型DDDのユニットテストは、純粋関数のテストとして実装できます。これにより、テストが簡潔で理解しやすくなります。
-typescript// tests/domain/conversation/functions.test.ts
+
+```typescript
+// tests/domain/conversation/functions.test.ts
 import { describe, it, expect } from 'vitest';
 import { z } from 'zod';
 import {
@@ -1325,24 +1378,27 @@ describe('会話ドメイン関数', () => {
     });
   });
 });
-11. 結論
+```
+
+## 11. 結論
 本ドキュメントでは、TypeScriptを使用した関数型ドメイン駆動設計（DDD）アプローチについて説明しました。関数型DDDでは、以下の特徴を持つ実装が可能です：
 
-不変性と型安全性 - 不変のデータ構造と強力な型システムにより、ドメインモデルの整合性を保証
-厳格なバリデーション - Zodによるスキーマベースのバリデーションで、ドメインルールを型レベルで強制
-副作用の分離 - 純粋な関数とTaskEitherモナドを使用して副作用を明示的に分離
-関数合成 - パイプラインやモナド変換を使った関数の合成により、複雑なロジックを整理
-代数的データ型 - より表現力のある型システムを活用して、「不正な状態を表現できない」モデルを構築
-テスト容易性 - 副作用を分離することで、純粋関数のテストが容易になる
+- **不変性と型安全性** - 不変のデータ構造と強力な型システムにより、ドメインモデルの整合性を保証
+- **厳格なバリデーション** - Zodによるスキーマベースのバリデーションで、ドメインルールを型レベルで強制
+- **副作用の分離** - 純粋な関数とTaskEitherモナドを使用して副作用を明示的に分離
+- **関数合成** - パイプラインやモナド変換を使った関数の合成により、複雑なロジックを整理
+- **代数的データ型** - より表現力のある型システムを活用して、「不正な状態を表現できない」モデルを構築
+- **テスト容易性** - 副作用を分離することで、純粋関数のテストが容易になる
 
 このアプローチを採用することで、複雑なドメインロジックを持つシステムでも、保守性と拡張性の高いコードを実現できます。Zodによるスキーマ駆動開発により、型の安全性と実行時のバリデーションを両立させ、より堅牢なシステムを構築できます。
-12. 参考文献
 
-"Domain Modeling Made Functional" by Scott Wlaschin
-"Functional Programming in TypeScript" by Giulio Canti
-"Functional and Reactive Domain Modeling" by Debasish Ghosh
-"Implementing Domain-Driven Design" by Vaughn Vernon
-"Clean Architecture" by Robert C. Martin
-"TypeScript in 50 Lessons" by Stefan Baumgartner
-"Type-Driven Development with TypeScript" by Josh Adams, et al.
-"Zod Documentation" (https://zod.dev/)
+## 12. 参考文献
+
+- "Domain Modeling Made Functional" by Scott Wlaschin
+- "Functional Programming in TypeScript" by Giulio Canti
+- "Functional and Reactive Domain Modeling" by Debasish Ghosh
+- "Implementing Domain-Driven Design" by Vaughn Vernon
+- "Clean Architecture" by Robert C. Martin
+- "TypeScript in 50 Lessons" by Stefan Baumgartner
+- "Type-Driven Development with TypeScript" by Josh Adams, et al.
+- "Zod Documentation" (https://zod.dev/)
