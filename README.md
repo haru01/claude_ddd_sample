@@ -48,7 +48,7 @@ npm run type-check
 npm test
 
 # サンプルの実行
-npm run dev -- src/example.ts
+npm run example
 ```
 
 ## 主要な概念
