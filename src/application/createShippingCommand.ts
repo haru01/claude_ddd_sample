@@ -44,16 +44,13 @@ export const createCreateShippingCommandHandler = (
 ) => {
   return (command: CreateShippingCommand): TaskEither<CreateShippingError, ShippingId> => {
     // バリデーション
-    try {
-      CreateShippingCommandSchema.parse(command);
-    } catch (error) {
-      if (error instanceof z.ZodError) {
-        const validationError: CreateShippingError = {
-          type: "validation_error",
-          message: error.errors[0].message
-        };
-        return taskEither.fromEither(left(validationError));
-      }
+    const validationResult = CreateShippingCommandSchema.safeParse(command);
+    if (!validationResult.success) {
+      const validationError: CreateShippingError = {
+        type: "validation_error",
+        message: validationResult.error.errors[0].message
+      };
+      return taskEither.fromEither(left(validationError));
     }
 
     return pipe(

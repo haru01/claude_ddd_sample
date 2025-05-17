@@ -51,7 +51,7 @@ async function applicationExample() {
   // イベントハンドラーの登録
   eventBus.subscribe('OrderPlacedEvent', async (event: OrderPlacedEvent) => {
     console.log(`\n注文確定イベントを受信しました:`, {
-      orderId: event.orderId,
+      orderId: event.aggregateId,
       totalAmount: event.totalAmount
     });
   });
@@ -78,19 +78,29 @@ async function applicationExample() {
     throw new Error("値オブジェクトの作成に失敗しました");
   }
 
-  const orderLine1 = OrderLineSchema.parse({
+  const orderLine1Result = OrderLineSchema.safeParse({
     productId: createProductId(),
     productName: "TypeScript実践ガイド",
     unitPrice: price1Result.value,
     quantity: quantity1Result.value
   });
 
-  const orderLine2 = OrderLineSchema.parse({
+  if (!orderLine1Result.success) {
+    throw new Error("注文明細の作成に失敗しました: " + orderLine1Result.error.errors[0].message);
+  }
+  const orderLine1 = orderLine1Result.data;
+
+  const orderLine2Result = OrderLineSchema.safeParse({
     productId: createProductId(),
     productName: "関数型プログラミング入門",
     unitPrice: price2Result.value,
     quantity: quantity2Result.value
   });
+
+  if (!orderLine2Result.success) {
+    throw new Error("注文明細の作成に失敗しました: " + orderLine2Result.error.errors[0].message);
+  }
+  const orderLine2 = orderLine2Result.data;
 
   const placeOrderCommand: PlaceOrderCommand = {
     lines: [orderLine1, orderLine2]
@@ -124,13 +134,18 @@ async function applicationExample() {
   // 3. 配送作成コマンドの実行
   console.log('\n3. 配送作成コマンドを実行');
   
-  const shippingAddress = AddressSchema.parse({
+  const shippingAddressResult = AddressSchema.safeParse({
     street: "東京都渋谷区神南1-2-3",
     city: "渋谷区",
     state: "東京都",
     postalCode: "150-0041",
     country: "日本"
   });
+
+  if (!shippingAddressResult.success) {
+    throw new Error("住所の作成に失敗しました: " + shippingAddressResult.error.errors[0].message);
+  }
+  const shippingAddress = shippingAddressResult.data;
 
   const createShippingCommand: CreateShippingCommand = {
     orderId,

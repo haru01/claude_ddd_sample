@@ -33,7 +33,11 @@ export class OrderPlacedEvent implements OrderPlacedEventType {
   }
 
   validate(): OrderPlacedEventType {
-    return OrderPlacedEventSchema.parse(this);
+    const result = OrderPlacedEventSchema.safeParse(this);
+    if (!result.success) {
+      throw new Error(result.error.errors[0].message || "注文確定イベントの検証に失敗しました");
+    }
+    return result.data;
   }
 }
 
@@ -56,7 +60,11 @@ export class OrderPaidEvent implements OrderPaidEventType {
   }
 
   validate(): OrderPaidEventType {
-    return OrderPaidEventSchema.parse(this);
+    const result = OrderPaidEventSchema.safeParse(this);
+    if (!result.success) {
+      throw new Error(result.error.errors[0].message || "注文支払い完了イベントの検証に失敗しました");
+    }
+    return result.data;
   }
 }
 
@@ -83,7 +91,11 @@ export class ShipmentStartedEvent implements ShipmentStartedEventType {
   }
 
   validate(): ShipmentStartedEventType {
-    return ShipmentStartedEventSchema.parse(this);
+    const result = ShipmentStartedEventSchema.safeParse(this);
+    if (!result.success) {
+      throw new Error(result.error.errors[0].message || "配送開始イベントの検証に失敗しました");
+    }
+    return result.data;
   }
 }
 
@@ -108,6 +120,10 @@ export class ShipmentDeliveredEvent implements ShipmentDeliveredEventType {
   }
 
   validate(): ShipmentDeliveredEventType {
-    return ShipmentDeliveredEventSchema.parse(this);
+    const result = ShipmentDeliveredEventSchema.safeParse(this);
+    if (!result.success) {
+      throw new Error(result.error.errors[0].message || "配送完了イベントの検証に失敗しました");
+    }
+    return result.data;
   }
 }

@@ -42,12 +42,17 @@ async function example() {
     throw new Error("値オブジェクトの作成に失敗しました");
   }
 
-  const orderLine1 = OrderLineSchema.parse({
+  const orderLine1Result = OrderLineSchema.safeParse({
     productId: createProductId(),
     productName: "TypeScriptガイドブック",
     unitPrice: price1Result.value,
     quantity: quantity1Result.value
   });
+
+  if (!orderLine1Result.success) {
+    throw new Error("注文明細の作成に失敗しました: " + orderLine1Result.error.errors[0].message);
+  }
+  const orderLine1 = orderLine1Result.data;
 
   const addResult1 = addOrderLine(order, orderLine1);
   if (addResult1.success) {
@@ -65,12 +70,17 @@ async function example() {
     throw new Error("値オブジェクトの作成に失敗しました");
   }
 
-  const orderLine2 = OrderLineSchema.parse({
+  const orderLine2Result = OrderLineSchema.safeParse({
     productId: createProductId(),
     productName: "関数型プログラミング入門",
     unitPrice: price2Result.value,
     quantity: quantity2Result.value
   });
+
+  if (!orderLine2Result.success) {
+    throw new Error("注文明細の作成に失敗しました: " + orderLine2Result.error.errors[0].message);
+  }
+  const orderLine2 = orderLine2Result.data;
 
   const addResult2 = addOrderLine(order, orderLine2);
   if (addResult2.success) {
@@ -112,13 +122,18 @@ async function example() {
 
   // 5. 配送の作成
   console.log('5. 配送を作成');
-  const address = AddressSchema.parse({
+  const addressResult = AddressSchema.safeParse({
     street: "東京都渋谷区神宮前1-2-3",
     city: "渋谷区",
     state: "東京都",
     postalCode: "150-0001",
     country: "日本"
   });
+
+  if (!addressResult.success) {
+    throw new Error("住所の作成に失敗しました: " + addressResult.error.errors[0].message);
+  }
+  const address = addressResult.data;
 
   let shipping = createShipping(order.id, address, "express");
   console.log(`配送ID: ${shipping.id}`);

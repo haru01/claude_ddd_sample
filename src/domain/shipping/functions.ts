@@ -34,7 +34,11 @@ export const createShipping = (
   };
 
   // スキーマでバリデーション
-  return ShippingSchema.parse(shipping);
+  const result = ShippingSchema.safeParse(shipping);
+  if (!result.success) {
+    throw new Error(result.error.errors[0].message || "配送の作成中にエラーが発生しました");
+  }
+  return result.data;
 };
 
 // 配送の準備を開始する純粋関数
@@ -47,29 +51,23 @@ export const startPreparation = (shipping: Shipping): Result<Shipping> => {
     };
   }
 
-  try {
-    const updatedShipping = ShippingSchema.parse({
-      ...shipping,
-      status: { type: "preparing" as const },
-      updatedAt: new Date()
-    });
+  const result = ShippingSchema.safeParse({
+    ...shipping,
+    status: { type: "preparing" as const },
+    updatedAt: new Date()
+  });
 
-    return {
-      success: true,
-      value: updatedShipping
-    };
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      return {
-        success: false,
-        error: error.errors[0].message
-      };
-    }
+  if (!result.success) {
     return {
       success: false,
-      error: "配送準備の開始中に不明なエラーが発生しました"
+      error: result.error.errors[0].message
     };
   }
+
+  return {
+    success: true,
+    value: result.data
+  };
 };
 
 // 配送を発送する純粋関数
@@ -85,33 +83,27 @@ export const shipOrder = (shipping: Shipping): Result<Shipping> => {
   const now = new Date();
   const trackingNumber = createTrackingNumber();
 
-  try {
-    const updatedShipping = ShippingSchema.parse({
-      ...shipping,
-      status: {
-        type: "shipped" as const,
-        shippedAt: now,
-        trackingNumber
-      },
-      updatedAt: now
-    });
+  const result = ShippingSchema.safeParse({
+    ...shipping,
+    status: {
+      type: "shipped" as const,
+      shippedAt: now,
+      trackingNumber
+    },
+    updatedAt: now
+  });
 
-    return {
-      success: true,
-      value: updatedShipping
-    };
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      return {
-        success: false,
-        error: error.errors[0].message
-      };
-    }
+  if (!result.success) {
     return {
       success: false,
-      error: "配送の発送処理中に不明なエラーが発生しました"
+      error: result.error.errors[0].message
     };
   }
+
+  return {
+    success: true,
+    value: result.data
+  };
 };
 
 // 配送を完了する純粋関数
@@ -126,29 +118,23 @@ export const deliverShipment = (shipping: Shipping): Result<Shipping> => {
 
   const now = new Date();
 
-  try {
-    const updatedShipping = ShippingSchema.parse({
-      ...shipping,
-      status: { type: "delivered" as const, deliveredAt: now },
-      updatedAt: now
-    });
+  const result = ShippingSchema.safeParse({
+    ...shipping,
+    status: { type: "delivered" as const, deliveredAt: now },
+    updatedAt: now
+  });
 
-    return {
-      success: true,
-      value: updatedShipping
-    };
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      return {
-        success: false,
-        error: error.errors[0].message
-      };
-    }
+  if (!result.success) {
     return {
       success: false,
-      error: "配送の完了処理中に不明なエラーが発生しました"
+      error: result.error.errors[0].message
     };
   }
+
+  return {
+    success: true,
+    value: result.data
+  };
 };
 
 // 配達予定日を計算するヘルパー関数

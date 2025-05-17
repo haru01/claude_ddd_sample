@@ -48,16 +48,13 @@ export const createPlaceOrderCommandHandler = (
 ) => {
   return (command: PlaceOrderCommand): TaskEither<PlaceOrderError, OrderId> => {
     // バリデーション
-    try {
-      PlaceOrderCommandSchema.parse(command);
-    } catch (error) {
-      if (error instanceof z.ZodError) {
-        const validationError: PlaceOrderError = {
-          type: "validation_error",
-          message: error.errors[0].message
-        };
-        return taskEither.fromEither(left(validationError));
-      }
+    const validationResult = PlaceOrderCommandSchema.safeParse(command);
+    if (!validationResult.success) {
+      const validationError: PlaceOrderError = {
+        type: "validation_error",
+        message: validationResult.error.errors[0].message
+      };
+      return taskEither.fromEither(left(validationError));
     }
 
     // 注文の作成処理

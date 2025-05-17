@@ -30,7 +30,11 @@ export const createOrder = (customerId: CustomerId): Order => {
   };
 
   // スキーマでバリデーション
-  return OrderSchema.parse(order);
+  const result = OrderSchema.safeParse(order);
+  if (!result.success) {
+    throw new Error(result.error.errors[0].message || "注文の作成中にエラーが発生しました");
+  }
+  return result.data;
 };
 
 // 注文明細行を追加する純粋関数
@@ -55,34 +59,32 @@ export const addOrderLine = (
     };
   }
 
-  try {
-    const newLines = [...order.lines, line];
-    const totalAmount = calculateTotalAmount(newLines);
+  const newLines = [...order.lines, line];
+  const totalAmountResult = calculateTotalAmount(newLines);
+  
+  if (!totalAmountResult.success) {
+    return totalAmountResult;
+  }
 
-    // 新しい注文オブジェクトを作成し、スキーマでバリデーション
-    const updatedOrder = OrderSchema.parse({
-      ...order,
-      lines: newLines,
-      totalAmount,
-      updatedAt: new Date()
-    });
+  // 新しい注文オブジェクトを作成し、スキーマでバリデーション
+  const result = OrderSchema.safeParse({
+    ...order,
+    lines: newLines,
+    totalAmount: totalAmountResult.value,
+    updatedAt: new Date()
+  });
 
-    return {
-      success: true,
-      value: updatedOrder
-    };
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      return {
-        success: false,
-        error: error.errors[0].message
-      };
-    }
+  if (!result.success) {
     return {
       success: false,
-      error: "注文の更新中に不明なエラーが発生しました"
+      error: result.error.errors[0].message
     };
   }
+
+  return {
+    success: true,
+    value: result.data
+  };
 };
 
 // 注文を確定する純粋関数
@@ -104,29 +106,23 @@ export const placeOrder = (order: Order): Result<Order> => {
 
   const now = new Date();
 
-  try {
-    const updatedOrder = OrderSchema.parse({
-      ...order,
-      status: { type: "placed" as const, placedAt: now },
-      updatedAt: now
-    });
+  const result = OrderSchema.safeParse({
+    ...order,
+    status: { type: "placed" as const, placedAt: now },
+    updatedAt: now
+  });
 
-    return {
-      success: true,
-      value: updatedOrder
-    };
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      return {
-        success: false,
-        error: error.errors[0].message
-      };
-    }
+  if (!result.success) {
     return {
       success: false,
-      error: "注文の確定中に不明なエラーが発生しました"
+      error: result.error.errors[0].message
     };
   }
+
+  return {
+    success: true,
+    value: result.data
+  };
 };
 
 // 注文を支払い済みにする純粋関数
@@ -141,41 +137,30 @@ export const markAsPaid = (order: Order): Result<Order> => {
 
   const now = new Date();
 
-  try {
-    const updatedOrder = OrderSchema.parse({
-      ...order,
-      status: { type: "paid" as const, paidAt: now },
-      updatedAt: now
-    });
+  const result = OrderSchema.safeParse({
+    ...order,
+    status: { type: "paid" as const, paidAt: now },
+    updatedAt: now
+  });
 
-    return {
-      success: true,
-      value: updatedOrder
-    };
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      return {
-        success: false,
-        error: error.errors[0].message
-      };
-    }
+  if (!result.success) {
     return {
       success: false,
-      error: "注文の支払い処理中に不明なエラーが発生しました"
+      error: result.error.errors[0].message
     };
   }
+
+  return {
+    success: true,
+    value: result.data
+  };
 };
 
 // 合計金額を計算するヘルパー関数
-const calculateTotalAmount = (lines: ReadonlyArray<OrderLine>): Price => {
+const calculateTotalAmount = (lines: ReadonlyArray<OrderLine>): Result<Price> => {
   const total = lines.reduce((sum, line) => {
     return sum + (line.unitPrice * line.quantity);
   }, 0);
 
-  const priceResult = createPrice(total);
-  if (!priceResult.success) {
-    throw new Error(priceResult.error);
-  }
-
-  return priceResult.value;
+  return createPrice(total);
 };

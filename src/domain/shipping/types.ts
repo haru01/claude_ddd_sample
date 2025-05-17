@@ -100,29 +100,23 @@ export const createAddress = (
   postalCode: string,
   country: string
 ): Result<Address> => {
-  try {
-    const address = AddressSchema.parse({
-      street,
-      city,
-      state,
-      postalCode,
-      country
-    });
+  const result = AddressSchema.safeParse({
+    street,
+    city,
+    state,
+    postalCode,
+    country
+  });
 
-    return {
-      success: true,
-      value: address
-    };
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      return {
-        success: false,
-        error: error.errors[0].message || "無効な住所です"
-      };
-    }
+  if (!result.success) {
     return {
       success: false,
-      error: "住所の作成中に不明なエラーが発生しました"
+      error: result.error.errors[0].message || "無効な住所です"
     };
   }
+
+  return {
+    success: true,
+    value: result.data
+  };
 };
