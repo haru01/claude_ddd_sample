@@ -1,5 +1,5 @@
 import { OrderId } from '../../domain/order/types';
-import { Shipping, ShippingId, ShippingRepository, createShippingId } from '../../domain/shipping/types';
+import { Shipping, ShippingId, ShippingRepository, ShippingStatus, createShippingId } from '../../domain/shipping/types';
 
 /**
  * インメモリ配送リポジトリの実装
@@ -31,6 +31,19 @@ export class InMemoryShippingRepository implements ShippingRepository {
     
     const shipping = this.shippings.get(shippingId);
     return shipping || null;
+  }
+
+  async findByStatus(status: ShippingStatus["type"]): Promise<Shipping[]> {
+    const shippings: Shipping[] = [];
+    
+    for (const shipping of this.shippings.values()) {
+      if (shipping.status.type === status) {
+        shippings.push(shipping);
+      }
+    }
+    
+    // 作成日時の昇順でソート
+    return shippings.sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
   }
 
   nextId(): ShippingId {

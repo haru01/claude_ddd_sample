@@ -1,4 +1,4 @@
-import { Order, OrderId, CustomerId, OrderRepository, createOrderId } from '../../domain/order/types';
+import { Order, OrderId, CustomerId, OrderRepository, OrderStatus, createOrderId } from '../../domain/order/types';
 
 /**
  * インメモリ注文リポジトリの実装
@@ -37,6 +37,19 @@ export class InMemoryOrderRepository implements OrderRepository {
     for (const orderId of orderIds) {
       const order = this.orders.get(orderId);
       if (order) {
+        orders.push(order);
+      }
+    }
+    
+    // 作成日時の昇順でソート
+    return orders.sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
+  }
+
+  async findByStatus(status: OrderStatus["type"]): Promise<Order[]> {
+    const orders: Order[] = [];
+    
+    for (const order of this.orders.values()) {
+      if (order.status.type === status) {
         orders.push(order);
       }
     }

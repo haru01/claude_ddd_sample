@@ -71,6 +71,7 @@ export interface OrderRepository {
   save: (order: Order) => Promise<void>;
   findById: (id: OrderId) => Promise<Order | null>;
   findByCustomerId: (customerId: CustomerId) => Promise<Order[]>;
+  findByStatus: (status: OrderStatus["type"]) => Promise<Order[]>;
   nextId: () => OrderId;
 }
 

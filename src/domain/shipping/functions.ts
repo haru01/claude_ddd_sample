@@ -7,6 +7,7 @@ import {
   Address,
   Result,
   ShippingSchema,
+  ShippingRepository,
   createShippingId,
   createTrackingNumber
 } from './types';
@@ -156,7 +157,7 @@ const calculateEstimatedDeliveryDate = (
   from: Date
 ): Date => {
   const date = new Date(from);
-  
+
   switch (method) {
     case "standard":
       date.setDate(date.getDate() + 7);
@@ -168,14 +169,6 @@ const calculateEstimatedDeliveryDate = (
       date.setDate(date.getDate() + 1);
       break;
   }
-  
+
   return date;
 };
-
-// リポジトリインターフェース
-export interface ShippingRepository {
-  save: (shipping: Shipping) => Promise<void>;
-  findById: (id: ShippingId) => Promise<Shipping | null>;
-  findByOrderId: (orderId: OrderId) => Promise<Shipping | null>;
-  findByStatus: (status: ShippingStatus["type"]) => Promise<Shipping[]>;
-}

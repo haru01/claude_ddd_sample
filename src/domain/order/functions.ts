@@ -10,6 +10,7 @@ import {
   OrderSchema,
   OrderLineSchema,
   OrderError,
+  OrderRepository,
   createOrderId,
   createPrice
 } from './types';
@@ -178,10 +179,3 @@ const calculateTotalAmount = (lines: ReadonlyArray<OrderLine>): Price => {
 
   return priceResult.value;
 };
-
-// リポジトリインターフェース
-export interface OrderRepository {
-  save: (order: Order) => Promise<void>;
-  findById: (id: OrderId) => Promise<Order | null>;
-  findByStatus: (status: OrderStatus["type"]) => Promise<Order[]>;
-}

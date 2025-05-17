@@ -62,6 +62,7 @@ export interface ShippingRepository {
   save: (shipping: Shipping) => Promise<void>;
   findById: (id: ShippingId) => Promise<Shipping | null>;
   findByOrderId: (orderId: OrderId) => Promise<Shipping | null>;
+  findByStatus: (status: ShippingStatus["type"]) => Promise<Shipping[]>;
   nextId: () => ShippingId;
 }
 
