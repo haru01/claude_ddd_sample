@@ -5,6 +5,7 @@
   "main": "index.js",
   "scripts": {
     "example": "npx tsx src/example.ts",
+    "example:app": "npx tsx src/applicationExample.ts",
     "dev": "tsx watch src/index.ts",
     "test": "vitest",
     "type-check": "tsc --noEmit",

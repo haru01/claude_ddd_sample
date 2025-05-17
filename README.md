@@ -51,6 +51,7 @@ npm test
 
 # サンプルの実行
 npm run example
+npm run example:app
 ```
 
 ## 主要な概念
